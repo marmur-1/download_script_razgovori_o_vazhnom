@@ -14,7 +14,13 @@ def unzip(f, encoding, v):
         list = z.namelist()
         list.sort()
         for i in list:
-            n = Path(data['config']['save_path']+i.encode('cp437').decode(encoding).replace(" /","/").replace("/ ","/"))
+            n = Path(data['config']['save_path']+
+                    i.encode('cp437')
+                    .decode(encoding)
+                    .replace(" /","/")
+                    .replace("/ ","/")
+                    .replace("\"","＂")
+                )
             if v:
                 print(n)
             if i[-1] == '/':
