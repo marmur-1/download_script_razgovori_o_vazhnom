@@ -8,19 +8,25 @@ import os
 from pathlib import Path
 from datetime import datetime 
 
+# функция удаления запрещённых символов
+def removechars(value):
+    deletechars = ':*?"<>|'
+    value = value.replace("//","/").replace(" /","/").replace("/ ","/")
+    for c in deletechars:
+        value = value.replace(c,'')
+    return value;
 # функция разорхивирования
-def unzip(f, path, encoding, v):
+def unzip(f, path, v):
     with zipfile.ZipFile(f) as z:
         list = z.namelist()
         list.sort()
+
         for i in list:
-            n = Path(path+
-                    i.encode('cp437')
-                    .decode(encoding)
-                    .replace(" /","/")
-                    .replace("/ ","/")
-                    .replace("\"","＂")
-                )
+            try:
+                np = removechars(path+i.replace('\\',os.path.sep).encode('cp437').decode('cp866'))
+            except Exception:
+                np = removechars(path+i.replace('\\',os.path.sep))
+            n = Path(np)
             if v:
                 print(n)
             if i[-1] == '/':
@@ -64,15 +70,12 @@ with open("conf.json", "r", encoding='utf8') as read_file:
     data = json.load(read_file)
  
 url = "https://razgovor.edsoo.ru"
-ND = 0 
 
 #Поиск и переход в топики
 page = req.get(url)
 page_soup = bs(page.text,"lxml")
 main = page_soup.find("div", class_="content-block-wrapper")
 atags = main.find_all('a', href=True)
-
-
 
 #Поиск ссылок для скачивания в топиках
 for a in atags:
@@ -95,6 +98,7 @@ for a in atags:
     main_in = page_in_soup.find_all("div", class_="topic-resource-download")
 
     #Проверка, был ли этот топик скачан полностью или нет
+    ND = 0 
     if (a['href'] in data['downloaded']) == False:
         print("\nПопытка скачивания из:",a['href'])
         #Подготовка цикла для скачивания
@@ -116,16 +120,18 @@ for a in atags:
                 download_url = response.json()['href']
 
             #Скачивание файла
-            print("\nСкачивание:",download_url, date+" "+title+'.zip')
+            print("Скачивание:",download_url, date+" "+title+'.zip')
             s = Path(data['config']['save_path']+subpath)
             if not s.exists():
-                s.mkdir()            
-            archive = data['config']['save_path']+subpath+date+" "+title+'.zip'
-            download(download_url, archive)
+                s.mkdir()        
+            ND = ND+1     
+            archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'
+            if not Path(archive).exists():
+                download(download_url, archive)
 
             #Разархивирование файла
             print("Разархивирование: ", archive)
-            unzip(archive, data['config']['save_path']+subpath,'CP866', True)
+            unzip(archive, data['config']['save_path']+subpath, True)
 
             # Удаление архива
             os.remove(archive)
@@ -135,4 +141,4 @@ for a in atags:
         with open('conf.json',"w",encoding='utf8') as filedone:
                 json.dump(data,filedone,ensure_ascii=False)
 
-        print("\n\n\nЗапись:",a['href'])
+        print("Добавление",a['href'],"в исключение")
