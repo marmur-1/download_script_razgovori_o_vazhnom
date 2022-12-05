@@ -6,8 +6,6 @@ from tqdm import tqdm
 import zipfile
 from pathlib import Path
 
-print("\n"*20)
-
 # функция разорхивирования
 def unzip(f, encoding, v):
     with zipfile.ZipFile(f) as z:
@@ -56,9 +54,19 @@ page_soup = bs(page.text,"lxml")
 main = page_soup.find("div", class_="content-block-wrapper")
 atags = main.find_all('a', href=True)
 
+
+
 #Поиск ссылок для скачивания в топиках
 for a in atags:
     url_in = url+a['href']
+    try:
+        date = a.find("div", class_="card-date").text.replace("\n","")
+        print(date)
+        title = a.find("div", class_="card-title").text.replace("Подробнее","").replace("\n","")
+        print(title)
+    except Exception:
+        continue
+
     page_in = req.get(url_in)
     page_in_soup = bs(page_in.text,"lxml")
     main_in = page_in_soup.find_all("div", class_="topic-resource-download")
