@@ -4,15 +4,17 @@ from urllib.parse import urlencode
 import json
 from tqdm import tqdm
 import zipfile
+import os
 from pathlib import Path
+from datetime import datetime 
 
 # функция разорхивирования
-def unzip(f, encoding, v):
+def unzip(f, path, encoding, v):
     with zipfile.ZipFile(f) as z:
         list = z.namelist()
         list.sort()
         for i in list:
-            n = Path(data['config']['save_path']+
+            n = Path(path+
                     i.encode('cp437')
                     .decode(encoding)
                     .replace(" /","/")
@@ -40,6 +42,22 @@ def download(url_from, path_to_file):
     progress_bar.close()
     if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
         print("ERROR, something went wrong")
+# функция преобразования месяца
+def month_from_ru_to_eng(month):
+    out = ''
+    if month == 'января': out = '01'
+    if month == 'февраля': out = '02'
+    if month == 'марта': out = '03'
+    if month == 'апреля': out = '04'
+    if month == 'мая': out = '05'
+    if month == 'июня': out = '06'
+    if month == 'июля': out = '07'
+    if month == 'августа': out = '08'
+    if month == 'сентябся': out = '09'
+    if month == 'октября': out = '10'
+    if month == 'ноября': out = '11'
+    if month == 'декабря': out = '12'
+    return out
 
 #Чтение конфига
 with open("conf.json", "r", encoding='utf8') as read_file:
@@ -61,11 +79,16 @@ for a in atags:
     url_in = url+a['href']
     try:
         date = a.find("div", class_="card-date").text.replace("\n","")
-        print(date)
         title = a.find("div", class_="card-title").text.replace("Подробнее","").replace("\n","")
-        print(title)
     except Exception:
         continue
+
+    day = date.split(' ')[0]
+    mounth = month_from_ru_to_eng(date.split(' ')[1])
+    year = str(datetime.now().year)
+    date = year+"_"+mounth+"_"+day.zfill(2)
+    subpath = date+" "+title+"/"
+
 
     page_in = req.get(url_in)
     page_in_soup = bs(page_in.text,"lxml")
@@ -76,7 +99,6 @@ for a in atags:
         print("\nПопытка скачивания из:",a['href'])
         #Подготовка цикла для скачивания
         for ff in main_in:
-            ND=ND+1
             atags_in = ff.a
             #Проверка на формат скачиваемого файла
             if atags_in['href'].endswith(".zip"):
@@ -94,14 +116,19 @@ for a in atags:
                 download_url = response.json()['href']
 
             #Скачивание файла
-            print("\nСкачивание:",download_url)
-            archive = data['config']['save_path']+a['href'].replace('/', '')+'_'+str(ND)+'.zip'
+            print("\nСкачивание:",download_url, date+" "+title+'.zip')
+            s = Path(data['config']['save_path']+subpath)
+            if not s.exists():
+                s.mkdir()            
+            archive = data['config']['save_path']+subpath+date+" "+title+'.zip'
             download(download_url, archive)
 
             #Разархивирование файла
             print("Разархивирование: ", archive)
-            unzip(archive, 'CP866', True)
+            unzip(archive, data['config']['save_path']+subpath,'CP866', True)
 
+            # Удаление архива
+            os.remove(archive)
         
         #Запись полностью скаченного топика
         data["downloaded"].append(a['href'])
