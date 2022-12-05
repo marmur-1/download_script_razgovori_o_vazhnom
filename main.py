@@ -16,7 +16,6 @@ def unzip(f, encoding, v):
         for i in list:
             n = Path(data['config']['save_path']+i.encode('cp437').decode(encoding).replace(" /","/").replace("/ ","/"))
             if v:
-                print(i)
                 print(n)
             if i[-1] == '/':
                 if not n.exists():
@@ -24,7 +23,7 @@ def unzip(f, encoding, v):
             else:
                 with n.open('wb') as w:
                     w.write(z.read(i))
-
+# функция скачиваниея
 def download(url_from, path_to_file):
     download_response = req.get(url_from, stream=True)
     total_size_in_bytes= int(download_response.headers.get('content-length', 0))
@@ -81,7 +80,7 @@ for a in atags:
                 download_url = response.json()['href']
 
             #Скачивание файла
-            print("\n\nСкачивание:",download_url)
+            print("\nСкачивание:",download_url)
             archive = data['config']['save_path']+a['href'].replace('/', '')+'_'+str(ND)+'.zip'
             download(download_url, archive)
 
@@ -89,9 +88,6 @@ for a in atags:
             print("Разархивирование: ", archive)
             unzip(archive, 'CP866', True)
 
-            # with zipfile.ZipFile(archive, 'r') as zip_file:
-            #     zip_file.extractall(data['config']['save_path']+a['href'].replace('/', ''))
-            
         
         #Запись полностью скаченного топика
         data["downloaded"].append(a['href'])
