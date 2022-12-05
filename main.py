@@ -2,10 +2,7 @@ import requests as req
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urlencode
 import json
-
 from tqdm import tqdm
-
-import sys
 import zipfile
 from pathlib import Path
 
@@ -14,9 +11,12 @@ print("\n"*20)
 # функция разорхивирования
 def unzip(f, encoding, v):
     with zipfile.ZipFile(f) as z:
-        for i in z.namelist():
-            n = Path(i.encode('cp437').decode(encoding))
+        list = z.namelist()
+        list.sort()
+        for i in list:
+            n = Path(data['config']['save_path']+i.encode('cp437').decode(encoding).replace(" /","/").replace("/ ","/"))
             if v:
+                print(i)
                 print(n)
             if i[-1] == '/':
                 if not n.exists():
