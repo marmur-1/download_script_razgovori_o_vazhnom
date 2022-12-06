@@ -126,15 +126,19 @@ for a in atags:
                 s.mkdir()        
             ND = ND+1     
             archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'
-            if not Path(archive).exists():
+            if data['config']['resave_archive']:
                 download(download_url, archive)
+            else:
+                if not Path(archive).exists():
+                    download(download_url, archive)
 
             #Разархивирование файла
             print("Разархивирование: ", archive)
             unzip(archive, data['config']['save_path']+subpath, True)
 
             # Удаление архива
-            os.remove(archive)
+            if data['config']['delete_archive']:
+                os.remove(archive)
         
         #Запись полностью скаченного топика
         data["downloaded"].append(a['href'])
