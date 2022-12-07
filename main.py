@@ -8,13 +8,25 @@ import os
 from pathlib import Path
 from datetime import datetime 
 
+# функция логирования
+def logfile(state, result):
+    date = datetime.today().strftime("%Y-%m-%d")
+    time = datetime.now().strftime("%H:%M:%S")
+    if result == 1: 
+        result="OK\n"
+    else:
+        result="ERROR\n"
+    INFO=date+' '+time+" "+state+" ... "+result
+    with open('logs/'+date+'.log','a',encoding='utf8') as f:
+        f.write(INFO)
+    result=0
 # функция удаления запрещённых символов
 def removechars(value):
     deletechars = ':*?"<>|'
     value = value.replace("//","/").replace(" /","/").replace("/ ","/")
     for c in deletechars:
         value = value.replace(c,'')
-    return value;
+    return value
 # функция разорхивирования
 def unzip(f, path, v):
     with zipfile.ZipFile(f) as z:
@@ -120,22 +132,31 @@ for a in atags:
                 download_url = response.json()['href']
 
             #Скачивание файла
-            print("Скачивание:",download_url, date+" "+title+'.zip')
-            s = Path(data['config']['save_path']+subpath)
-            if not s.exists():
-                s.mkdir()        
-            ND = ND+1     
-            archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'
-            if data['config']['resave_archive']:
-                download(download_url, archive)
-            else:
-                if not Path(archive).exists():
+            try:
+                print("Скачивание:",download_url, date+" "+title+'.zip')
+                s = Path(data['config']['save_path']+subpath)
+                if not s.exists():
+                    s.mkdir()        
+                ND = ND+1     
+                archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'
+                if data['config']['resave_archive']:
                     download(download_url, archive)
-
+                else:
+                    if not Path(archive).exists():
+                        download(download_url, archive)
+            except Exception:
+                logfile('Скачивание '+date+" "+title+'.zip', 0)
+                continue
+            logfile('Скачивание '+date+" "+title+'.zip', 1)
+            
             #Разархивирование файла
-            print("Разархивирование: ", archive)
-            unzip(archive, data['config']['save_path']+subpath, True)
-
+            try:
+                print("Разархивирование: ", archive)
+                unzip(archive, data['config']['save_path']+subpath, True)
+            except Exception:
+                logfile('Разархивирование'+archive, 0)
+                continue
+            logfile('Разархивирование'+archive, 1)
             # Удаление архива
             if data['config']['delete_archive']:
                 os.remove(archive)
