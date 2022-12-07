@@ -9,17 +9,17 @@ from pathlib import Path
 from datetime import datetime 
 
 # функция логирования
-def logfile(state, result):
-    date = datetime.today().strftime("%Y-%m-%d")
-    time = datetime.now().strftime("%H:%M:%S")
-    if result == 1: 
-        result="OK\n"
+def log(state, time=False):
+    d = datetime.today().strftime("%Y-%m-%d")
+    t = datetime.now().strftime("%H:%M:%S")
+    if time:
+        INFO="\n"+d+' '+t+" "+state
     else:
-        result="ERROR\n"
-    INFO=date+' '+time+" "+state+" ... "+result
-    with open('logs/'+date+'.log','a',encoding='utf8') as f:
+        INFO=state
+    with open('./logs/'+d+'.log','a',encoding='utf8') as f:
+        print(INFO, end='')
         f.write(INFO)
-    result=0
+
 # функция удаления запрещённых символов
 def removechars(value):
     deletechars = ':*?"<>|'
@@ -52,6 +52,7 @@ def download(url_from, path_to_file):
     download_response = req.get(url_from, stream=True)
     total_size_in_bytes= int(download_response.headers.get('content-length', 0))
     block_size = 1024 #1 Kibibyte
+    print()
     progress_bar = tqdm(total=total_size_in_bytes, unit='mB', unit_scale=True)
     with open(path_to_file, 'wb') as f:
         for datadd in download_response.iter_content(block_size):
@@ -112,7 +113,6 @@ for a in atags:
     #Проверка, был ли этот топик скачан полностью или нет
     ND = 0 
     if (a['href'] in data['downloaded']) == False:
-        print("\nПопытка скачивания из:",a['href'])
         #Подготовка цикла для скачивания
         for ff in main_in:
             atags_in = ff.a
@@ -131,39 +131,65 @@ for a in atags:
                 response = req.get(final_url)
                 download_url = response.json()['href']
 
-            #Скачивание файла
-            try:
-                print("Скачивание:",download_url, date+" "+title+'.zip')
-                s = Path(data['config']['save_path']+subpath)
-                if not s.exists():
-                    s.mkdir()        
-                ND = ND+1     
-                archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'
-                if data['config']['resave_archive']:
+            #Создание директории
+            s = Path(data['config']['save_path']+subpath)
+            if not s.exists():
+                try:
+                    log("Создание директории: "+s.name+" ... ",True)   
+                    s.mkdir()      
+                    log("OK")    
+                except Exception:
+                    log("ERROR")    
+                    continue    
+
+            #Скачивание файла        
+            ND = ND+1     
+            archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'          
+            if data['config']['resave_archive']:
+                try:
+                    log("Скачивание: "+archive+" ... ",True)   
                     download(download_url, archive)
-                else:
-                    if not Path(archive).exists():
+                    log("OK")    
+                except Exception:
+                    log("ERROR")    
+                    continue
+            else:
+                if not Path(archive).exists():
+                    try:
+                        log("Скачивание: "+archive+" ... ",True)   
                         download(download_url, archive)
-            except Exception:
-                logfile('Скачивание '+date+" "+title+'.zip', 0)
-                continue
-            logfile('Скачивание '+date+" "+title+'.zip', 1)
+                        log("OK")    
+                    except Exception:
+                        log("ERROR")    
+                        continue
             
             #Разархивирование файла
             try:
-                print("Разархивирование: ", archive)
+                log("Разархивирование: "+archive+" ... ",True)    
                 unzip(archive, data['config']['save_path']+subpath, True)
+                log("OK")    
             except Exception:
-                logfile('Разархивирование'+archive, 0)
+                log("ERROR")    
                 continue
-            logfile('Разархивирование'+archive, 1)
+
             # Удаление архива
             if data['config']['delete_archive']:
-                os.remove(archive)
-        
+                try:
+                    log("Удаление: "+archive+" ... ",True)    
+                    os.remove(archive)
+                    log("OK")    
+                except Exception:
+                    log("ERROR")    
+   
         #Запись полностью скаченного топика
-        data["downloaded"].append(a['href'])
-        with open('conf.json',"w",encoding='utf8') as filedone:
-                json.dump(data,filedone,ensure_ascii=False)
+        try:
+            log("Добавление "+a['href']+" в исключение ... ",True)   
+            data["downloaded"].append(a['href'])
+            with open('conf.json',"w",encoding='utf8') as filedone:
+                    json.dump(data,filedone,ensure_ascii=False)
+            log("OK")    
+        except Exception:
+            log("ERROR")    
+         
 
-        print("Добавление",a['href'],"в исключение")
+
