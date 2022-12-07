@@ -13,7 +13,7 @@ def log(state, time=False):
     d = datetime.today().strftime("%Y-%m-%d")
     t = datetime.now().strftime("%H:%M:%S")
     if time:
-        INFO="\n"+d+' '+t+" "+state
+        INFO=d+' '+t+" "+state
     else:
         INFO=state
     with open('./logs/'+d+'.log','a',encoding='utf8') as f:
@@ -137,9 +137,9 @@ for a in atags:
                 try:
                     log("Создание директории: "+s.name+" ... ",True)   
                     s.mkdir()      
-                    log("OK")    
+                    log("OK\n")    
                 except Exception:
-                    log("ERROR")    
+                    log("ERROR\n")    
                     continue    
 
             #Скачивание файла        
@@ -149,27 +149,27 @@ for a in atags:
                 try:
                     log("Скачивание: "+archive+" ... ",True)   
                     download(download_url, archive)
-                    log("OK")    
+                    log("OK\n")    
                 except Exception:
-                    log("ERROR")    
+                    log("ERROR\n")    
                     continue
             else:
                 if not Path(archive).exists():
                     try:
                         log("Скачивание: "+archive+" ... ",True)   
                         download(download_url, archive)
-                        log("OK")    
+                        log("OK\n")    
                     except Exception:
-                        log("ERROR")    
+                        log("ERROR\n")    
                         continue
             
             #Разархивирование файла
             try:
                 log("Разархивирование: "+archive+" ... ",True)    
                 unzip(archive, data['config']['save_path']+subpath, True)
-                log("OK")    
+                log("OK\n")    
             except Exception:
-                log("ERROR")    
+                log("ERROR\n")    
                 continue
 
             # Удаление архива
@@ -177,9 +177,9 @@ for a in atags:
                 try:
                     log("Удаление: "+archive+" ... ",True)    
                     os.remove(archive)
-                    log("OK")    
+                    log("OK\n")    
                 except Exception:
-                    log("ERROR")    
+                    log("ERROR\n")    
    
         #Запись полностью скаченного топика
         try:
@@ -187,9 +187,9 @@ for a in atags:
             data["downloaded"].append(a['href'])
             with open('conf.json',"w",encoding='utf8') as filedone:
                     json.dump(data,filedone,ensure_ascii=False)
-            log("OK")    
+            log("OK\n")    
         except Exception:
-            log("ERROR")    
+            log("ERROR\n")    
          
 
 
