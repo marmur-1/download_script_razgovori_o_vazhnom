@@ -19,7 +19,6 @@ def log(state, time=False):
     with open('./logs/'+d+'.log','a',encoding='utf8') as f:
         print(INFO, end='')
         f.write(INFO)
-
 # функция удаления запрещённых символов
 def removechars(value):
     deletechars = ':*?"<>|'
