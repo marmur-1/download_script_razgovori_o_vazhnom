@@ -71,7 +71,7 @@ def month_from_ru_to_eng(month):
     if month == 'июня': out = '06'
     if month == 'июля': out = '07'
     if month == 'августа': out = '08'
-    if month == 'сентябся': out = '09'
+    if month == 'сентября': out = '09'
     if month == 'октября': out = '10'
     if month == 'ноября': out = '11'
     if month == 'декабря': out = '12'
