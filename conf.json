@@ -1,1 +1,1 @@
-{"config": {"save_path": "./downloads/", "resave_archive": true, "delete_archive": true}, "downloaded": []}
+{"config": {"save_path": "./downloads/", "unzip_path": "./unzip/", "resave_archive": false, "delete_archive": false}, "downloaded": []}

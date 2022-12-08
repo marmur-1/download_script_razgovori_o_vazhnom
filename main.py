@@ -31,7 +31,8 @@ def unzip(f, path, v):
     with zipfile.ZipFile(f) as z:
         list = z.namelist()
         list.sort()
-
+        if v:
+            print()
         for i in list:
             try:
                 np = removechars(path+i.replace('\\',os.path.sep).encode('cp437').decode('cp866'))
@@ -131,7 +132,7 @@ for a in atags:
                 download_url = response.json()['href']
 
             #Создание директории
-            s = Path(data['config']['save_path']+subpath)
+            s = Path(data['config']['unzip_path']+subpath)
             if not s.exists():
                 try:
                     log("Создание директории: "+s.name+" ... ",True)   
@@ -143,7 +144,7 @@ for a in atags:
 
             #Скачивание файла        
             ND = ND+1     
-            archive = data['config']['save_path']+subpath+date+"_"+title+"_"+str(ND)+'.zip'          
+            archive = data['config']['save_path']+date+"_"+title+"_"+str(ND)+'.zip'          
             if data['config']['resave_archive']:
                 try:
                     log("Скачивание: "+archive+" ... ",True)   
@@ -165,7 +166,7 @@ for a in atags:
             #Разархивирование файла
             try:
                 log("Разархивирование: "+archive+" ... ",True)    
-                unzip(archive, data['config']['save_path']+subpath, True)
+                unzip(archive, data['config']['unzip_path']+subpath, True)
                 log("OK\n")    
             except Exception:
                 log("ERROR\n")    
