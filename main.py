@@ -138,8 +138,9 @@ for a in atags:
                     log("Создание директории: "+s.name+" ... ",True)   
                     s.mkdir()      
                     log("OK\n")    
-                except Exception:
+                except Exception as e:
                     log("ERROR\n")    
+                    print(e)
                     continue    
 
             #Скачивание файла        
@@ -150,27 +151,30 @@ for a in atags:
                     log("Скачивание: "+archive+" ... ",True)   
                     download(download_url, archive)
                     log("OK\n")    
-                except Exception:
+                except Exception as e:
                     log("ERROR\n")    
-                    continue
+                    print(e)
+                    continue  
             else:
                 if not Path(archive).exists():
                     try:
                         log("Скачивание: "+archive+" ... ",True)   
                         download(download_url, archive)
                         log("OK\n")    
-                    except Exception:
+                    except Exception as e:
                         log("ERROR\n")    
-                        continue
+                        print(e)
+                        continue  
             
             #Разархивирование файла
             try:
                 log("Разархивирование: "+archive+" ... ",True)    
                 unzip(archive, data['config']['unzip_path']+subpath, True)
                 log("OK\n")    
-            except Exception:
+            except Exception as e:
                 log("ERROR\n")    
-                continue
+                print(e)
+                continue  
 
             # Удаление архива
             if data['config']['delete_archive']:
@@ -178,18 +182,20 @@ for a in atags:
                     log("Удаление: "+archive+" ... ",True)    
                     os.remove(archive)
                     log("OK\n")    
-                except Exception:
+                except Exception as e:
                     log("ERROR\n")    
+                    print(e)
    
         #Запись полностью скаченного топика
         try:
             log("Добавление "+a['href']+" в исключение ... ",True)   
             data["downloaded"].append(a['href'])
             with open('conf.json',"w",encoding='utf8') as filedone:
-                    json.dump(data,filedone,ensure_ascii=False)
+                json.dump(data,filedone,ensure_ascii=False)
             log("OK\n")    
-        except Exception:
+        except Exception as e:
             log("ERROR\n")    
+            print(e) 
          
 
 
