@@ -113,89 +113,133 @@ for a in atags:
     #Проверка, был ли этот топик скачан полностью или нет
     ND = 0 
     if (a['href'] in data['downloaded']) == False:
+        flag_topic_ok = True
         #Подготовка цикла для скачивания
         for ff in main_in:
+            flag_file_ok = True
             atags_in = ff.a
-            #Проверка на формат скачиваемого файла
-            if atags_in['href'].endswith(".zip"):
-                #zip    
-                download_url = atags_in['href']
-            elif atags_in['href'].endswith(".rar"):
-                #rar 
-                download_url = atags_in['href']
-            else:
-                #Подготовка для Яндекс.Диска
-                base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
-                public_key = atags_in['href']
-                final_url = base_url + urlencode(dict(public_key=public_key))
-                response = req.get(final_url)
-                download_url = response.json()['href']
-
-            #Создание директории
-            s = Path(data['config']['unzip_path']+subpath)
-            if not s.exists():
-                try:
-                    log("Создание директории: "+s.name+" ... ",True)   
-                    s.mkdir()      
-                    log("OK\n")    
-                except Exception as e:
-                    log("ERROR\n")    
-                    print(e)
-                    continue    
-
-            #Скачивание файла        
-            ND = ND+1     
-            archive = data['config']['save_path']+date+"_"+title+"_"+str(ND)+'.zip'          
-            if data['config']['resave_archive']:
-                try:
-                    log("Скачивание: "+archive+" ... ",True)   
-                    download(download_url, archive)
-                    log("OK\n")    
-                except Exception as e:
-                    log("ERROR\n")    
-                    print(e)
-                    continue  
-            else:
-                if not Path(archive).exists():
+            if (atags_in['href'] in data['downloaded']) == False:
+                #Проверка на формат скачиваемого файла
+                if atags_in['href'].endswith(".zip"):
+                    #zip    
                     try:
-                        log("Скачивание: "+archive+" ... ",True)   
-                        download(download_url, archive)
+                        download_url = atags_in['href']
+                    except Exception as e:
+                        print(e)
+                        flag_topic_ok = False
+                        flag_file_ok = False
+                elif atags_in['href'].endswith(".rar"):
+                    #rar
+                    try:
+                        download_url = atags_in['href']
+                    except Exception as e:
+                        print(e)
+                        flag_topic_ok = False
+                        flag_file_ok = False
+                else:
+                    #Подготовка для Яндекс.Диска
+                    try:
+                        base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
+                        public_key = atags_in['href']
+                        final_url = base_url + urlencode(dict(public_key=public_key))
+                        response = req.get(final_url)
+                        download_url = response.json()['href']
+                    except Exception as e:
+                        print(e)
+                        flag_topic_ok = False
+                        flag_file_ok = False
+
+                #Создание директории
+                if flag_file_ok:
+                    s = Path(data['config']['unzip_path']+subpath)
+                    if not s.exists():
+                        try:
+                            log("Создание директории: "+s.name+" ... ",True)   
+                            s.mkdir()      
+                            log("OK\n")    
+                        except Exception as e:
+                            log("ERROR\n")    
+                            print(e)
+                            flag_topic_ok = False
+                            flag_file_ok = False
+                            continue    
+
+                #Скачивание файла
+                if flag_file_ok:  
+                    ND = ND+1     
+                    archive = data['config']['save_path']+date+"_"+title+"_"+str(ND)+'.zip'          
+                    if data['config']['resave_archive']:
+                        try:
+                            log("Скачивание: "+archive+" ... ",True)   
+                            download(download_url, archive)
+                            log("OK\n")    
+                        except Exception as e:
+                            log("ERROR\n")    
+                            print(e)
+                            flag_topic_ok = False
+                            flag_file_ok = False
+                            continue  
+                    else:
+                        if not Path(archive).exists():
+                            try:
+                                log("Скачивание: "+archive+" ... ",True)   
+                                download(download_url, archive)
+                                log("OK\n")    
+                            except Exception as e:
+                                log("ERROR\n")    
+                                print(e)
+                                flag_topic_ok = False
+                                flag_file_ok = False
+                                continue  
+                
+                #Разархивирование файла
+                if flag_file_ok: 
+                    try:
+                        log("Разархивирование: "+archive+" ... ",True)    
+                        unzip(archive, data['config']['unzip_path']+subpath, True)
                         log("OK\n")    
                     except Exception as e:
                         log("ERROR\n")    
                         print(e)
+                        flag_topic_ok = False
+                        flag_file_ok = False
                         continue  
-            
-            #Разархивирование файла
+
+                # Удаление архива
+                if flag_file_ok: 
+                    if data['config']['delete_archive']:
+                        try:
+                            log("Удаление: "+archive+" ... ",True)    
+                            os.remove(archive)
+                            log("OK\n")    
+                        except Exception as e:
+                            log("ERROR\n")    
+                            flag_topic_ok = False
+                            flag_file_ok = False
+                            print(e)
+                #Запись полностью скаченного файла
+                if flag_file_ok: 
+                    try:
+                        log("Добавление "+atags_in['href']+" в исключение ... ",True)   
+                        data["downloaded"].append(atags_in['href'])
+                        with open('conf.json',"w",encoding='utf8') as filedone:
+                            json.dump(data,filedone,ensure_ascii=False)
+                        log("OK\n")    
+                    except Exception as e:
+                        log("ERROR\n")    
+                        print(e) 
+    
+        #Запись полностью скаченного топика
+        if flag_topic_ok: 
             try:
-                log("Разархивирование: "+archive+" ... ",True)    
-                unzip(archive, data['config']['unzip_path']+subpath, True)
+                log("Добавление "+a['href']+" в исключение ... ",True)   
+                data["downloaded"].append(a['href'])
+                with open('conf.json',"w",encoding='utf8') as filedone:
+                    json.dump(data,filedone,ensure_ascii=False)
                 log("OK\n")    
             except Exception as e:
                 log("ERROR\n")    
-                print(e)
-                continue  
-
-            # Удаление архива
-            if data['config']['delete_archive']:
-                try:
-                    log("Удаление: "+archive+" ... ",True)    
-                    os.remove(archive)
-                    log("OK\n")    
-                except Exception as e:
-                    log("ERROR\n")    
-                    print(e)
-   
-        #Запись полностью скаченного топика
-        try:
-            log("Добавление "+a['href']+" в исключение ... ",True)   
-            data["downloaded"].append(a['href'])
-            with open('conf.json',"w",encoding='utf8') as filedone:
-                json.dump(data,filedone,ensure_ascii=False)
-            log("OK\n")    
-        except Exception as e:
-            log("ERROR\n")    
-            print(e) 
+                print(e) 
          
 
 
