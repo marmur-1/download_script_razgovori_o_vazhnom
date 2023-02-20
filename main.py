@@ -120,11 +120,14 @@ for a in atags:
             atags_in = ff.a
             if (atags_in['href'] in data['downloaded']) == False:
                 #Проверка на формат скачиваемого файла
+                log("Проверка на формат скачиваемого файла: "+atags_in['href']+" ... ",True)   
                 if atags_in['href'].endswith(".zip"):
                     #zip    
                     try:
                         download_url = atags_in['href']
+                        log("OK\n")    
                     except Exception as e:
+                        log("ERROR\n")  
                         print(e)
                         flag_topic_ok = False
                         flag_file_ok = False
@@ -132,7 +135,9 @@ for a in atags:
                     #rar
                     try:
                         download_url = atags_in['href']
+                        log("OK\n")    
                     except Exception as e:
+                        log("ERROR\n")  
                         print(e)
                         flag_topic_ok = False
                         flag_file_ok = False
@@ -144,7 +149,9 @@ for a in atags:
                         final_url = base_url + urlencode(dict(public_key=public_key))
                         response = req.get(final_url)
                         download_url = response.json()['href']
+                        log("OK\n")    
                     except Exception as e:
+                        log("ERROR\n")  
                         print(e)
                         flag_topic_ok = False
                         flag_file_ok = False
