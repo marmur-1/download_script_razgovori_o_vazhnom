@@ -1,4 +1,5 @@
 import requests as req
+import re
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urlencode
 import json
@@ -47,7 +48,7 @@ def unzip(f, path, v):
             else:
                 with n.open('wb') as w:
                     w.write(z.read(i))
-# функция скачиваниея
+# функция скачивания
 def download(url_from, path_to_file):
     download_response = req.get(url_from, stream=True)
     total_size_in_bytes= int(download_response.headers.get('content-length', 0))
@@ -121,8 +122,8 @@ for a in atags:
             if (atags_in['href'] in data['downloaded']) == False:
                 #Проверка на формат скачиваемого файла
                 log("Проверка на формат скачиваемого файла: "+atags_in['href']+" ... ",True)   
-                if atags_in['href'].endswith(".zip"):
-                    #zip    
+                if atags_in['href'].endswith(".zip") or atags_in['href'].endswith(".rar"):
+                    #zip or rar  
                     try:
                         download_url = atags_in['href']
                         log("OK\n")    
@@ -131,17 +132,7 @@ for a in atags:
                         print(e)
                         flag_topic_ok = False
                         flag_file_ok = False
-                elif atags_in['href'].endswith(".rar"):
-                    #rar
-                    try:
-                        download_url = atags_in['href']
-                        log("OK\n")    
-                    except Exception as e:
-                        log("ERROR\n")  
-                        print(e)
-                        flag_topic_ok = False
-                        flag_file_ok = False
-                else:
+                elif atags_in['href'].startswith("https://disk.yandex.ru"):
                     #Подготовка для Яндекс.Диска
                     try:
                         base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
@@ -149,9 +140,30 @@ for a in atags:
                         final_url = base_url + urlencode(dict(public_key=public_key))
                         response = req.get(final_url)
                         download_url = response.json()['href']
-                        log("OK\n")    
+                        log("OK\n")
                     except Exception as e:
-                        log("ERROR\n")  
+                        log("ERROR\n")
+                        print(e)
+                        flag_topic_ok = False
+                        flag_file_ok = False
+                elif atags_in['href'].startswith("https://cloud.mail.ru/"):
+                    #Подготовка для CloudMail
+                    try:
+                        with req.Session() as s:
+                            main_url = 'https://cloud.mail.ru/api/v3/'
+                            # LINK ID
+                            link_id = re.search(r'/public/([^/]+/[^/]+)', atags_in['href'])[1]
+                            # ZIP NAME 
+                            zip_name = json.loads(s.get(main_url+'folder?weblink='+link_id).text)["name"]
+                            params = {
+                                'name': zip_name,
+                                'weblink_list': [link_id],
+                                'x-email': 'anonym'
+                            }
+                            download_url = json.loads(s.post(main_url+"zip/weblink", json=params).text)["key"]
+                            log("OK\n")
+                    except Exception as e:
+                        log("ERROR\n")
                         print(e)
                         flag_topic_ok = False
                         flag_file_ok = False
